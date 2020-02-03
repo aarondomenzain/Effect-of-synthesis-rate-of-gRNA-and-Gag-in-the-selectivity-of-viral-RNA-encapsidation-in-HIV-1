@@ -1,13 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 22 14:15:11 2020
+#Created on Wed Jan 22 14:15:11 2020
+#@author: aarondomenzain
 
-@author: aarondomenzain
-"""
-
-import scipy as sp
-from scipy import sparse
 import numpy as np
 import random
 import math
@@ -16,10 +9,11 @@ import math
 Kprot=0.1 #tasa de producción de Gag
 KRNA=0.01 #tasa de producción de gRNA
 #tmax=100 #número de iteraciones en el tiempo
-N=1000 #tamaño inicial de la recta numérica discreta
-CgRNA=500 #cantidad de gRNA inicial
+N=10000 #tamaño inicial de la recta numérica discreta
+CgRNA=100 #cantidad de gRNA inicial
 CmRNA=N-CgRNA #cantidad de mRNA inicial
-GagIn=10 #cantidad de gag inicial
+GagIn=500 #cantidad de gag inicial
+rprot=5 #radio promedio de proteína en unidades de pasos de random walk
 vir=0 #cantidad de viriones
 vlp=0 #cantidad de vlp
 pfold01=0.1
@@ -30,11 +24,12 @@ Pfold=[[1-pfold01,pfold01],[pfold01*math.exp(-BdG),1-pfold01*math.exp(-BdG)]]
 #LOCALIZACION INICIAL DE GAG
 #Argumentos: gagin=cantidad inicial de gag
 #Salida: Matriz de estados Gag
-def begin(gagin):
+def begin(gagin,cgrna,cmrna):
     #asigna posiciones y estados iniciales aleatorios
+    n=cgrna+cmrna
     gag=np.zeros([gagin,2])
     for i in range (gagin):
-        gag[i]=[random.randint(0,N),random.randint(0,1)] 
+        gag[i]=[random.randint(0,n),random.randint(0,1)] 
     #devuelve la matriz de posiciones y estados de gag
     return gag
     
@@ -61,9 +56,10 @@ def randomwalk(gag,n,d):
     #Compara distancias entre proteínas gag para determinar si sucede encapsidación
     #Si la encapsidación ocurre en mRNA, se formará un VLP
     #Si la encapsidación ocurre en gRNA, se formará un VIRIÓN
-    #Argumentos: Gag , d=radio efectivo de encapsidación , cgrna= cantidad de grna , vir=# de viriones , vlp=# de vlps
-def encaps(gag,n,d,cgrna,vir,vlp):
+    #Argumentos: Gag ,d=radio efectivo de encapsidación , cgrna= cantidad de grna , vir=# de viriones , vlp=# de vlps
+def encaps(gag,d,cmrna,cgrna,vir,vlp):
     par=[] #vector vacío que contendrá las etiquetas de las gags que formaron pareja
+    n=cmrna+cgrna
     ngags=gag.shape[0]
 
     for i in range (ngags-1):
@@ -83,7 +79,8 @@ def encaps(gag,n,d,cgrna,vir,vlp):
                     else:
                         vlp=vlp+1
                     par+=[i,j]
-    gag=np.delete(gag,par,0) #sustrae de la matriz Gag las proteinas que formaron parejas
+    #sustrae de la matriz Gag las proteinas que formaron parejas. El tercer índice indica el axis.
+    gag=np.delete(gag,par,0) 
 
     return ([gag,vir,vlp])
 
@@ -91,7 +88,7 @@ def encaps(gag,n,d,cgrna,vir,vlp):
 
 
 #Folding
-    #cambia el estado binario de las Gags acorde a una probabilidad de folding por unidad de tiempo 
+    #Modifica el estado binario de las Gags de acuerdo con una probabilidad de folding por unidad de tiempo 
     # pfold=matriz de probabilidad de transición
 
 def folding(gag,pfold):
@@ -104,14 +101,30 @@ def folding(gag,pfold):
 	return gag
 
 #Synthesis
+    #Producción de grna a una tasa constante krna
+    #Producción de gags a una tasa proporcional a la cantidad de gRNA
 
-#def synthesis(gag,cgrna,cmrna,kprot,krna):
+def synthesis(gag,cgrna,cmrna,kprot,krna,dt):
+    cgrna=cgrna+dt*kprot
+    dgag=dt*kprot*cgrna
+
+    return ([cgrna,cmrna,dgag])
+
+    #Asigna posiciones a las gag sintetizadas y las agrega al arreglo de gags
+def localization(gag,dgag,cgrna,cmrna):
+    n=cgrna+cmrna
+    if abs(dgag-round(dgag)) <= 0.1:
+        for i in range (round(dgag)):
+            #Estado de nueva proteína
+            newprot=[random.randint(0,n),random.randint(0,1)]
+            #Agrega el nuevo estado al arreglo
+            gag+=newprot 
 
 
 
 
-
-def foldtest(gag,v):
+def foldtest(gag):
+    v=np.zeros(gag.shape[0])
     for i in range (gag.shape[0]):
         v[i]=gag[i][1] #vector ordenado de estados de gags 
     return v
@@ -120,29 +133,17 @@ def foldtest(gag,v):
 
 
 
-############################ PROGRAMA PRINCIPAL ############################
+############################ PROGRAMA PRINCIPAL ###########################
+Gag=begin(GagIn,CgRNA,CmRNA) #GagIn: cantidad inicial de gags
+nt=10000
+#S=np.zeros([10,GagIn])
+#v=np.zeros(Gag.shape[0])
 
-
-
-Gag=begin(GagIn) #GagIn: cantidad inicial de gags
+print(GagIn)
 #Iterador temporal
-nt=10
-S=np.zeros([10,GagIn])
-v=np.zeros(Gag.shape[0])
-
 for t in range (nt):
-    #Gag=randomwalk(Gag,N,1)
-    #Gag=folding(Gag,Pfold)
-    S[t]=foldtest(Gag,v)
-    #[Gag,vir,vlp]=encaps(Gag,N,1,CgRNA,vir,vlp) #argumento 3 = radio de encapsidación
-print(S)
-#print(GagIn,Gag.shape[0],vir,vlp, Gag.shape[0] + 2*(vir+vlp) - GagIn)
-
-
-
-
-
-
-
-
-
+    Gag=randomwalk(Gag,N,1)
+    Gag=folding(Gag,Pfold)
+    #S[t]=foldtest(Gag)
+    [Gag,vir,vlp]=encaps(Gag,2*rprot,CmRNA,CgRNA,vir,vlp) #2do argumento = radio de encapsidación
+    print(t+1,Gag.shape[0],vir,vlp,vir/(vir+vlp),vlp/(vir+vlp),CgRNA/(CgRNA+CmRNA),CmRNA/(CgRNA+CmRNA))

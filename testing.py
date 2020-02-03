@@ -17,9 +17,9 @@ Kprot=0.1 #tasa de producción de Gag
 KRNA=0.01 #tasa de producción de gRNA
 #tmax=100 #número de iteraciones en el tiempo
 N=1000 #tamaño inicial de la recta numérica discreta
-CgRNA=50 #cantidad de gRNA inicial
+CgRNA=500 #cantidad de gRNA inicial
 CmRNA=N-CgRNA #cantidad de mRNA inicial
-GagIn=200 #cantidad de gag inicial
+GagIn=10 #cantidad de gag inicial
 vir=0 #cantidad de viriones
 vlp=0 #cantidad de vlp
 pfold01=0.1
@@ -103,6 +103,21 @@ def folding(gag,pfold):
 			elem[1]=1-i
 	return gag
 
+#Synthesis
+
+#def synthesis(gag,cgrna,cmrna,kprot,krna):
+
+
+
+
+
+def foldtest(gag,v):
+    for i in range (gag.shape[0]):
+        v[i]=gag[i][1] #vector ordenado de estados de gags 
+    return v
+
+
+
 
 
 ############################ PROGRAMA PRINCIPAL ############################
@@ -111,13 +126,17 @@ def folding(gag,pfold):
 
 Gag=begin(GagIn) #GagIn: cantidad inicial de gags
 #Iterador temporal
-nt=1
-for t in range (nt):
-    Gag=randomwalk(Gag,N,1)
-    Gag=folding(Gag,Pfold)
-    [Gag,vir,vlp]=encaps(Gag,N,2,CgRNA,vir,vlp) #argumento 3 = radio de encapsidación
+nt=10
+S=np.zeros([10,GagIn])
+v=np.zeros(Gag.shape[0])
 
-print(GagIn,Gag.shape[0],vir,vlp, Gag.shape[0] + 2*(vir+vlp) - GagIn)
+for t in range (nt):
+    #Gag=randomwalk(Gag,N,1)
+    #Gag=folding(Gag,Pfold)
+    S[t]=foldtest(Gag,v)
+    #[Gag,vir,vlp]=encaps(Gag,N,1,CgRNA,vir,vlp) #argumento 3 = radio de encapsidación
+print(S)
+#print(GagIn,Gag.shape[0],vir,vlp, Gag.shape[0] + 2*(vir+vlp) - GagIn)
 
 
 

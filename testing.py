@@ -10,14 +10,15 @@ Kprot=0.1 #tasa de producción de Gag
 KRNA=0.01 #tasa de producción de gRNA
 #tmax=100 #número de iteraciones en el tiempo
 N=10000 #tamaño inicial de la recta numérica discreta
-CgRNA=100 #cantidad de gRNA inicial
+CgRNA=10 #cantidad de gRNA inicial
 CmRNA=N-CgRNA #cantidad de mRNA inicial
-GagIn=500 #cantidad de gag inicial
+GagIn=200 #cantidad de gag inicial
 rprot=5 #radio promedio de proteína en unidades de pasos de random walk
 vir=0 #cantidad de viriones
 vlp=0 #cantidad de vlp
 pfold01=0.1
-BdG=11 #valor experimental BdG=11
+BdG=1 #Energía libre valor experimental BdG=11
+#Matriz de probabilidad de transición
 Pfold=[[1-pfold01,pfold01],[pfold01*math.exp(-BdG),1-pfold01*math.exp(-BdG)]] 
 
 
@@ -67,7 +68,7 @@ def encaps(gag,d,cmrna,cgrna,vir,vlp):
             r=abs(gag[i][0]-gag[j][0]) #distancia entre gags
             m=min(gag[i][0],gag[j][0]) #posición de gag más cercana al gRNA                       
             
-            #redefine la distancia
+            #redefine la distancia si 
             if r >n/2:
                 r=n-r
 
@@ -104,24 +105,42 @@ def folding(gag,pfold):
     #Producción de grna a una tasa constante krna
     #Producción de gags a una tasa proporcional a la cantidad de gRNA
 
-def synthesis(gag,cgrna,cmrna,kprot,krna,dt):
-    cgrna=cgrna+dt*kprot
-    dgag=dt*kprot*cgrna
+def synthesis(gag,cgrnain,kprot,krna,n,dt): 
+    deltagrna=n*dt*kprot
+    if deltagrna%1>0.9:
+        cgrna=cgrnain+round(deltagrna)
+        
+        
+        
+        
+        
+        
+        
+        
+    return ([dgag,cgrnainst]) #Agregar la variable cgrna instantánea que pueda crecer sin necesidad de ser entero
 
-    return ([cgrna,cmrna,dgag])
+    
 
-    #Asigna posiciones a las gag sintetizadas y las agrega al arreglo de gags
+
+
+#Asigna posiciones a las gag sintetizadas y las agrega al arreglo de gags
 def localization(gag,dgag,cgrna,cmrna):
     n=cgrna+cmrna
-    if abs(dgag-round(dgag)) <= 0.1:
+
+    #Evalúa si dgag está muy cerca de ser un número entero
+    if dgag&1 > 0.9:
         for i in range (round(dgag)):
-            #Estado de nueva proteína
+            #Nueva proteína con estado aleatorio
             newprot=[random.randint(0,n),random.randint(0,1)]
-            #Agrega el nuevo estado al arreglo
+            #Agrega la nueva proteína estado al arreglo
             gag+=newprot 
-
-
-
+            return gag
+        
+        
+        
+        
+        
+        
 
 def foldtest(gag):
     v=np.zeros(gag.shape[0])
@@ -133,9 +152,12 @@ def foldtest(gag):
 
 
 
+
+
+
 ############################ PROGRAMA PRINCIPAL ###########################
 Gag=begin(GagIn,CgRNA,CmRNA) #GagIn: cantidad inicial de gags
-nt=10000
+nt=1000
 #S=np.zeros([10,GagIn])
 #v=np.zeros(Gag.shape[0])
 
@@ -146,4 +168,5 @@ for t in range (nt):
     Gag=folding(Gag,Pfold)
     #S[t]=foldtest(Gag)
     [Gag,vir,vlp]=encaps(Gag,2*rprot,CmRNA,CgRNA,vir,vlp) #2do argumento = radio de encapsidación
-    print(t+1,Gag.shape[0],vir,vlp,vir/(vir+vlp),vlp/(vir+vlp),CgRNA/(CgRNA+CmRNA),CmRNA/(CgRNA+CmRNA))
+    #if 
+    print(t+1,Gag.shape[0],vir,vlp) #,vir/(vir+vlp),vlp/(vir+vlp),CgRNA/(CgRNA+CmRNA),CmRNA/(CgRNA+CmRNA))

@@ -62,6 +62,7 @@ def encaps(gag,d,cmrna,cgrna,vir,vlp):
                 if i not in par and j not in par:
                     if m<=cgrna:
                         vir=vir+1
+                        #Captura de grna de 10 rprot de longitud
                         if cgrna<10*rprot:
                             cgrna=0
                         else:
@@ -106,12 +107,12 @@ def synthesis(gagin,cgrnain,vir,vlp,kprot,krna,n,dt):
         gag0=0
     else:
         #Cantidad de gag sintetizada en el tiempo anterior
-        cgrna=cgrnain+int((n-1)*dt*krna)
+        cgrna=cgrnain+int((n-1)*dt*krna)-10*vir*rprot
         gag0=(n-1)*dt*kprot*cgrna 
     #Incremento de grna    
     deltagrna=n*dt*krna 
     #Suma la parte entera de deltagrna
-    cgrna=cgrnain+int(deltagrna) 
+    cgrna=cgrnain+int(deltagrna)-10*rprot*vir
     #Cantidad de gag sintetizada en el tiempo actual
     gag1=n*dt*kprot*cgrna
     #Número de gags sintetizadas
@@ -149,7 +150,7 @@ Kprot=0.1
 #Tasa de producción de gRNA
 KRNA=1
 #Tamaño inicial de la recta numérica discreta 
-N=10000 
+N=100000 
 #Cantidad de gRNA inicial
 CgRNAin=0 
 #Cantidad de mRNA inicial
@@ -174,7 +175,7 @@ Pfold=[[1-pfold01,pfold01],[pfold01*math.exp(-BdG),1-pfold01*math.exp(-BdG)]]
 Gag=begin(GagIn,CgRNAin,CmRNA) 
 
 #Iterador temporal
-nt=100
+nt=5000
 for t in range (nt):
     [CgRNA,Gagpop]=synthesis(GagIn,CgRNAin,vir,vlp,Kprot,KRNA,t,1)
     Gag=localization(Gag,Gagpop,CgRNA,CmRNA)

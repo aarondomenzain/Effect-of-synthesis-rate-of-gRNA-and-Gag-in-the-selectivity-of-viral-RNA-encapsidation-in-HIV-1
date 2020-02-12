@@ -28,7 +28,8 @@ def begin(gagin,cgrnain,cmrna):
     gagprod=0
     #Step en segundos
     dt=0.0000488/(dprot**2)
-    return (gag,vir,vlp,allostvir,allostvlp,cgrna,gagprod,dt)
+    stat=np.array([])
+    return (gag,vir,vlp,allostvir,allostvlp,cgrna,gagprod,dt,stat)
     
 #Random Walk
     #Cambia en +-d unidades la posición de los random walker de manera aleatoria
@@ -179,13 +180,14 @@ def localization(gag,gagprod,cgrna,cmrna):
         #print("gagprod a localizar:",int(gagprod))
     
     #Tamaño del dominio espacial
-        n=int(cgrna)+cmrna
+        N=int(cgrna)+cmrna
+        #n=int(N/2)
     #Número de gags sintetizadas a agregar
         dgag=int(gagprod)
         
         for i in range (dgag):
         #Nueva proteína con estado aleatorio
-            newprot=[random.randint(0,n),random.randint(0,1)]
+            newprot=[random.randint(0,N),random.randint(0,1)]
         #Agrega la nueva proteína estado al arreglo
             gag=np.append(gag,[newprot],0)
         gagprod=gagprod-int(gagprod) #or gagprod=gagprod%1
@@ -198,13 +200,13 @@ def localization(gag,gagprod,cgrna,cmrna):
 #LISTA DE PARÁMETROS
 
 #Diámetro promedio de proteína en unidades de pasos de random walk
-dprot=5     
+dprot=3
 #Tasa de producción de Gag
-Kprot=10
+Kprot=0.1
 #Tasa de producción de gRNA (Número de unidades de gRNA de longitud igual a 10 diámetros de gag)
-KRNA=2*(10*dprot)
+KRNA=100*(10*dprot)
 #Tamaño inicial de la recta numérica discreta 
-N=1000000
+N=100000
 #Cantidad de gRNA inicial
 CgRNAin=0
 #Cantidad de mRNA inicial
@@ -212,7 +214,7 @@ CmRNA=N-CgRNAin
 #Cantidad de gag inicial
 GagIn=0
 #Energía libre entre estados extendido-compacto en unidades kbT (valor experimental BdG=11)
-BdG=11 
+BdG=1
 #Matriz de probabilidad de transición
 pfold01=0.1
 Pfold=[[1-pfold01,pfold01],[pfold01*math.exp(-BdG),1-pfold01*math.exp(-BdG)]] 
@@ -223,17 +225,17 @@ Pfold=[[1-pfold01,pfold01],[pfold01*math.exp(-BdG),1-pfold01*math.exp(-BdG)]]
 ############################ PROGRAMA PRINCIPAL #####################################
 
 #Declaración de arreglo inicial
-(Gag,vir,vlp,allostvir,allostvlp,CgRNA,Gagprod,dt)=begin(GagIn,CgRNAin,CmRNA) 
+(Gag,vir,vlp,allostvir,allostvlp,CgRNA,Gagprod,dt,state)=begin(GagIn,CgRNAin,CmRNA) 
 
 #Iterador temporal
-nt=1000000
-state=np.array([])
+nt=300000
+
 for t in range (nt):
     [CgRNA,CmRNA,Gagprod,deltagag]=synthesis(GagIn,Gagprod,CgRNA,CmRNA,vir,vlp,Kprot,KRNA,dt)
     (Gag,Gagprod)=localization(Gag,Gagprod,CgRNA,CmRNA)
     
     #Si no hay gags, no hay nada que hacer
-    if Gag.shape[0]==0:
+    if Gag.shape[0]<1:
         continue
     
     else:
@@ -241,8 +243,8 @@ for t in range (nt):
         Gag=folding(Gag,Pfold)
         (Gag,CgRNA,CmRNA,vir,vlp,allostvir,allostvlp)=encaps(Gag,dprot,CmRNA,CgRNA,vir,vlp,allostvir,allostvlp) #2do argumento = radio de encapsidación
     
-    if Gag.shape[0]>1 and (t)%1000==0:
-        state=[t,np.around(t*dt,decimals=3),Gag.shape[0],np.around(CgRNA,decimals=4),vir,vlp,allostvir,allostvlp]
+    if Gag.shape[0]>1 and (t)%1000==0 or t==nt-1:
+        state=[t,np.around(t*dt,decimals=3),Gag.shape[0],np.around(CgRNA/(CgRNA+CmRNA),decimals=5),vir,vlp,allostvir,allostvlp]
         print(state)
 print("Elapsed time in s:",nt*dt)
     
